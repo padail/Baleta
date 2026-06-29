@@ -11,7 +11,8 @@ return new class extends Migration
         Schema::create('fish_delivery_invoice_items', function (Blueprint $table) {
             $table->id();
             $table->foreignId('invoice_id')->constrained('fish_delivery_invoices')->cascadeOnDelete();
-            $table->foreignId('buyer_id')->constrained('buyers')->restrictOnDelete();
+            $table->foreignId('buyer_id')->nullable()->constrained('buyers')->nullOnDelete();
+            $table->string('buyer_name');
             $table->string('fish_type')->nullable();
             $table->unsignedInteger('box_count')->default(0);
             $table->unsignedBigInteger('price_per_box')->default(0);
@@ -19,7 +20,7 @@ return new class extends Migration
             $table->text('notes')->nullable();
             $table->timestamps();
 
-            $table->index(['invoice_id', 'buyer_id']);
+            $table->index(['invoice_id', 'buyer_name']);
             $table->index('buyer_id');
         });
     }

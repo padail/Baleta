@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\FishDeliveryInvoice;
 use App\Models\MonthlyClosing;
+use App\Models\OwnerExpense;
 use App\Models\Ship;
 use Illuminate\Http\Request;
 
@@ -30,7 +31,11 @@ class DashboardController extends Controller
             'invoice_count' => (clone $invoiceBase)->count(),
             'active_ships' => Ship::query()->forOwner($ownerId)->where('is_active', true)->count(),
             'monthly_closing_count' => MonthlyClosing::query()->forOwner($ownerId)->where('month', $now->month)->where('year', $now->year)->count(),
+            'operational_expense_total' => (int) OwnerExpense::query()->forOwner($ownerId)->where('status', OwnerExpense::STATUS_POSTED)->where('expense_type', OwnerExpense::TYPE_OPERATIONAL)->whereYear('expense_date', $now->year)->whereMonth('expense_date', $now->month)->sum('amount'),
+            'non_operational_expense_total' => (int) OwnerExpense::query()->forOwner($ownerId)->where('status', OwnerExpense::STATUS_POSTED)->where('expense_type', OwnerExpense::TYPE_NON_OPERATIONAL)->whereYear('expense_date', $now->year)->whereMonth('expense_date', $now->month)->sum('amount'),
         ];
+
+        $summary['distributable_income'] = $summary['net_income'] - $summary['operational_expense_total'];
 
         $latestInvoices = FishDeliveryInvoice::query()
             ->with(['ship', 'captain'])

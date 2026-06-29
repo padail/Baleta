@@ -4,14 +4,12 @@ namespace App\Services;
 
 use App\Models\FishDeliveryInvoice;
 use App\Models\InvoiceExpense;
-use Illuminate\Support\Collection;
-use InvalidArgumentException;
 
 class InvoiceCalculationService
 {
     public function calculateFromPayload(array $payload): array
     {
-        $items = collect($payload['items'] ?? [])->filter(fn ($item) => ! empty($item['buyer_id']));
+        $items = collect($payload['items'] ?? [])->filter(fn ($item) => filled($item['buyer_name'] ?? null));
         $totalBoxesFromItems = (int) $items->sum(fn ($item) => (int) ($item['box_count'] ?? 0));
         $totalIncome = (int) $items->sum(function ($item) {
             return (int) ($item['box_count'] ?? 0) * (int) ($item['price_per_box'] ?? 0);
@@ -34,14 +32,13 @@ class InvoiceCalculationService
         ];
     }
 
+    /**
+     * Revisi bisnis: total gabus detail pembeli tidak wajib sama dengan total gabus turun.
+     * Method ini sengaja dibuat no-op agar controller lama atau test lama tidak rusak.
+     */
     public function assertBoxCountValid(array $payload): void
     {
-        $calculation = $this->calculateFromPayload($payload);
-        $totalBoxes = (int) ($payload['total_boxes'] ?? 0);
-
-        if ($calculation['total_boxes_from_items'] !== $totalBoxes) {
-            throw new InvalidArgumentException('Total gabus pada detail pembeli harus sama dengan total gabus turun.');
-        }
+        return;
     }
 
     public function syncItemsAndExpenses(FishDeliveryInvoice $invoice, array $payload): void
@@ -50,7 +47,7 @@ class InvoiceCalculationService
         $invoice->expenses()->delete();
 
         foreach (($payload['items'] ?? []) as $item) {
-            if (empty($item['buyer_id'])) {
+            if (! filled($item['buyer_name'] ?? null)) {
                 continue;
             }
 
@@ -58,7 +55,8 @@ class InvoiceCalculationService
             $pricePerBox = (int) ($item['price_per_box'] ?? 0);
 
             $invoice->items()->create([
-                'buyer_id' => $item['buyer_id'],
+                'buyer_id' => $item['buyer_id'] ?? null,
+                'buyer_name' => trim((string) $item['buyer_name']),
                 'fish_type' => $item['fish_type'] ?? null,
                 'box_count' => $boxCount,
                 'price_per_box' => $pricePerBox,

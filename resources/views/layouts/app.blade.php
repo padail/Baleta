@@ -17,8 +17,8 @@
                 <a class="px-3 py-2 rounded hover:bg-slate-100" href="{{ route('dashboard') }}">Dashboard</a>
                 <a class="px-3 py-2 rounded hover:bg-slate-100" href="{{ route('ships.index') }}">Kapal</a>
                 <a class="px-3 py-2 rounded hover:bg-slate-100" href="{{ route('captains.index') }}">Kapten</a>
-                <a class="px-3 py-2 rounded hover:bg-slate-100" href="{{ route('buyers.index') }}">Pembeli</a>
                 <a class="px-3 py-2 rounded hover:bg-slate-100" href="{{ route('invoices.index') }}">Invoice</a>
+                <a class="px-3 py-2 rounded hover:bg-slate-100" href="{{ route('expenses.index') }}">Pengeluaran Rekap</a>
                 <a class="px-3 py-2 rounded hover:bg-slate-100" href="{{ route('monthly-closings.index') }}">Tutup Bulan</a>
                 @if(auth()->user()?->isOwner())
                     <a class="px-3 py-2 rounded hover:bg-slate-100" href="{{ route('admins.index') }}">Admin</a>

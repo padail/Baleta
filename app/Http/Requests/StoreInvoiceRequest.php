@@ -26,7 +26,7 @@ class StoreInvoiceRequest extends FormRequest
             'additional_expense' => ['nullable', 'integer', 'min:0'],
             'notes' => ['nullable', 'string', 'max:2000'],
             'items' => ['required', 'array', 'min:1'],
-            'items.*.buyer_id' => ['required', Rule::exists('buyers', 'id')->where('owner_id', $ownerId)],
+            'items.*.buyer_name' => ['required', 'string', 'max:255'],
             'items.*.fish_type' => ['nullable', 'string', 'max:255'],
             'items.*.box_count' => ['required', 'integer', 'min:1'],
             'items.*.price_per_box' => ['required', 'integer', 'min:0'],

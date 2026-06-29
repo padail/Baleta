@@ -18,19 +18,23 @@ class MonthlyClosing extends Model
 
     protected $fillable = [
         'owner_id',
-        'ship_id',
-        'captain_id',
         'closing_number',
         'month',
         'year',
+        'total_ships',
         'total_invoices',
         'total_boxes',
         'total_income',
         'total_expense',
         'net_income',
+        'daily_net_income',
+        'operational_expense_total',
+        'distributable_income',
         'captain_percentage',
         'captain_share',
         'owner_share',
+        'non_operational_expense_total',
+        'owner_final_income',
         'status',
         'created_by',
         'approved_by',
@@ -51,14 +55,9 @@ class MonthlyClosing extends Model
         return $query->where('owner_id', $ownerId);
     }
 
-    public function ship(): BelongsTo
+    public function owner(): BelongsTo
     {
-        return $this->belongsTo(Ship::class);
-    }
-
-    public function captain(): BelongsTo
-    {
-        return $this->belongsTo(Captain::class);
+        return $this->belongsTo(User::class, 'owner_id');
     }
 
     public function creator(): BelongsTo
@@ -74,5 +73,20 @@ class MonthlyClosing extends Model
     public function items(): HasMany
     {
         return $this->hasMany(MonthlyClosingItem::class);
+    }
+
+    public function expenses(): HasMany
+    {
+        return $this->hasMany(OwnerExpense::class);
+    }
+
+    public function operationalExpenses(): HasMany
+    {
+        return $this->hasMany(OwnerExpense::class)->where('expense_type', OwnerExpense::TYPE_OPERATIONAL);
+    }
+
+    public function nonOperationalExpenses(): HasMany
+    {
+        return $this->hasMany(OwnerExpense::class)->where('expense_type', OwnerExpense::TYPE_NON_OPERATIONAL);
     }
 }

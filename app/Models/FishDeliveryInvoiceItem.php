@@ -13,6 +13,7 @@ class FishDeliveryInvoiceItem extends Model
     protected $fillable = [
         'invoice_id',
         'buyer_id',
+        'buyer_name',
         'fish_type',
         'box_count',
         'price_per_box',
@@ -28,5 +29,10 @@ class FishDeliveryInvoiceItem extends Model
     public function buyer(): BelongsTo
     {
         return $this->belongsTo(Buyer::class);
+    }
+
+    public function getDisplayBuyerNameAttribute(): string
+    {
+        return $this->buyer_name ?: (string) ($this->buyer?->name ?? '-');
     }
 }

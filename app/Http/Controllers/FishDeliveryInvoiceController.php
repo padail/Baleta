@@ -4,7 +4,6 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\StoreInvoiceRequest;
 use App\Http\Requests\UpdateInvoiceRequest;
-use App\Models\Buyer;
 use App\Models\FishDeliveryInvoice;
 use App\Models\Ship;
 use App\Services\AuditLogService;
@@ -40,10 +39,14 @@ class FishDeliveryInvoiceController extends Controller
     public function create(Request $request)
     {
         $ownerId = $request->user()->activeOwnerId();
-        $ships = Ship::query()->with('activeCaptainAssignment.captain')->forOwner($ownerId)->where('is_active', true)->orderBy('name')->get();
-        $buyers = Buyer::query()->forOwner($ownerId)->where('is_active', true)->orderBy('name')->get();
+        $ships = Ship::query()
+            ->with('activeCaptainAssignment.captain')
+            ->forOwner($ownerId)
+            ->where('is_active', true)
+            ->orderBy('name')
+            ->get();
 
-        return view('invoices.create', compact('ships', 'buyers'));
+        return view('invoices.create', compact('ships'));
     }
 
     public function store(StoreInvoiceRequest $request, InvoiceCalculationService $calculator, InvoiceNumberService $numberService, AuditLogService $audit)
@@ -52,7 +55,6 @@ class FishDeliveryInvoiceController extends Controller
             $invoice = DB::transaction(function () use ($request, $calculator, $numberService) {
                 $ownerId = $request->user()->activeOwnerId();
                 $payload = $request->validated();
-                $calculator->assertBoxCountValid($payload);
 
                 $ship = Ship::query()
                     ->with('activeCaptainAssignment')
@@ -115,11 +117,15 @@ class FishDeliveryInvoiceController extends Controller
         abort_unless($invoice->isEditable(), 403, 'Invoice hanya bisa diedit saat status draft.');
 
         $ownerId = $request->user()->activeOwnerId();
-        $ships = Ship::query()->with('activeCaptainAssignment.captain')->forOwner($ownerId)->where('is_active', true)->orderBy('name')->get();
-        $buyers = Buyer::query()->forOwner($ownerId)->where('is_active', true)->orderBy('name')->get();
-        $invoice->load(['items', 'expenses']);
+        $ships = Ship::query()
+            ->with('activeCaptainAssignment.captain')
+            ->forOwner($ownerId)
+            ->where('is_active', true)
+            ->orderBy('name')
+            ->get();
+        $invoice->load(['items.buyer', 'expenses']);
 
-        return view('invoices.edit', compact('invoice', 'ships', 'buyers'));
+        return view('invoices.edit', compact('invoice', 'ships'));
     }
 
     public function update(UpdateInvoiceRequest $request, FishDeliveryInvoice $invoice, InvoiceCalculationService $calculator, AuditLogService $audit)
@@ -131,7 +137,6 @@ class FishDeliveryInvoiceController extends Controller
             DB::transaction(function () use ($request, $invoice, $calculator, $audit) {
                 $ownerId = $request->user()->activeOwnerId();
                 $payload = $request->validated();
-                $calculator->assertBoxCountValid($payload);
                 $old = $invoice->toArray();
 
                 $ship = Ship::query()
@@ -177,12 +182,6 @@ class FishDeliveryInvoiceController extends Controller
     {
         $this->authorizeOwner($invoice);
         abort_unless($invoice->status === FishDeliveryInvoice::STATUS_DRAFT, 403, 'Hanya invoice draft yang bisa diposting.');
-
-        $invoice->load('items');
-        $itemBoxes = (int) $invoice->items->sum('box_count');
-        if ($itemBoxes !== (int) $invoice->total_boxes) {
-            return back()->withErrors(['invoice' => 'Total gabus detail pembeli tidak sama dengan total gabus turun.']);
-        }
 
         $old = $invoice->toArray();
         $calculator->recalculate($invoice);

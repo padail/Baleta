@@ -47,7 +47,7 @@ class MonthlyClosingController extends Controller
                 'owner_id' => $request->user()->activeOwnerId(),
                 'month' => $request->month,
                 'year' => $request->year,
-                'captain_percentage' => $request->captain_percentage,
+                'ships' => $request->input('ships', []),
                 'notes' => $request->notes,
             ], $numberService);
 
@@ -62,7 +62,11 @@ class MonthlyClosingController extends Controller
     public function show(MonthlyClosing $monthlyClosing)
     {
         $this->authorizeOwner($monthlyClosing);
-        $monthlyClosing->load(['items.invoice', 'items.ship', 'items.captain', 'expenses.ship']);
+        $monthlyClosing->load([
+            'shipItems.invoiceItems.invoice',
+            'shipItems.operationalExpenses',
+            'nonOperationalExpenses',
+        ]);
 
         return view('monthly-closings.show', ['closing' => $monthlyClosing]);
     }
@@ -70,7 +74,11 @@ class MonthlyClosingController extends Controller
     public function print(MonthlyClosing $monthlyClosing)
     {
         $this->authorizeOwner($monthlyClosing);
-        $monthlyClosing->load(['items.invoice', 'items.ship', 'items.captain', 'expenses.ship']);
+        $monthlyClosing->load([
+            'shipItems.invoiceItems.invoice',
+            'shipItems.operationalExpenses',
+            'nonOperationalExpenses',
+        ]);
 
         return view('monthly-closings.print', ['closing' => $monthlyClosing]);
     }

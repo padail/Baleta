@@ -1,11 +1,13 @@
 @extends('layouts.app')
-@section('title', 'Tambah Pengeluaran Rekap')
+@section('title', 'Tambah Pengeluaran Non-Operasional')
 @section('content')
-<h1 class="text-2xl font-bold mb-5">Tambah Pengeluaran Rekap</h1>
-<form method="POST" action="{{ route('expenses.store') }}" class="bg-white rounded-xl shadow p-5 space-y-4 max-w-3xl">
+<div class="mb-5">
+    <h1 class="text-2xl font-bold">Tambah Pengeluaran Non-Operasional</h1>
+    <p class="text-sm text-slate-500">Tidak mempengaruhi perhitungan kapal dan jasa kapten.</p>
+</div>
+<form method="POST" action="{{ route('expenses.store') }}" class="bg-white rounded-2xl shadow p-4 space-y-4">
     @csrf
     @include('owner-expenses.form')
-    <button class="px-4 py-2 bg-blue-600 text-white rounded-lg font-semibold">Simpan</button>
-    <a href="{{ route('expenses.index') }}" class="px-4 py-2 bg-slate-100 rounded-lg">Kembali</a>
+    <button class="w-full md:w-auto px-5 py-3 rounded-xl bg-blue-600 text-white font-semibold">Simpan</button>
 </form>
 @endsection

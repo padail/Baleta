@@ -24,15 +24,31 @@ class DashboardController extends Controller
             ->whereYear('invoice_date', $now->year)
             ->whereMonth('invoice_date', $now->month);
 
+        $closing = MonthlyClosing::query()
+            ->forOwner($ownerId)
+            ->where('month', $now->month)
+            ->where('year', $now->year)
+            ->where('status', MonthlyClosing::STATUS_APPROVED)
+            ->first();
+
         $summary = [
             'total_income' => (int) (clone $invoiceBase)->sum('total_income'),
             'total_expense' => (int) (clone $invoiceBase)->sum('total_expense'),
             'net_income' => (int) (clone $invoiceBase)->sum('net_income'),
             'invoice_count' => (clone $invoiceBase)->count(),
             'active_ships' => Ship::query()->forOwner($ownerId)->where('is_active', true)->count(),
-            'monthly_closing_count' => MonthlyClosing::query()->forOwner($ownerId)->where('month', $now->month)->where('year', $now->year)->count(),
-            'operational_expense_total' => (int) OwnerExpense::query()->forOwner($ownerId)->where('status', OwnerExpense::STATUS_POSTED)->where('expense_type', OwnerExpense::TYPE_OPERATIONAL)->whereYear('expense_date', $now->year)->whereMonth('expense_date', $now->month)->sum('amount'),
-            'non_operational_expense_total' => (int) OwnerExpense::query()->forOwner($ownerId)->where('status', OwnerExpense::STATUS_POSTED)->where('expense_type', OwnerExpense::TYPE_NON_OPERATIONAL)->whereYear('expense_date', $now->year)->whereMonth('expense_date', $now->month)->sum('amount'),
+            'monthly_closing_count' => $closing ? 1 : 0,
+            'operational_expense_total' => (int) ($closing?->operational_expense_total ?? 0),
+            'captain_share' => (int) ($closing?->captain_share ?? 0),
+            'owner_share' => (int) ($closing?->owner_share ?? 0),
+            'non_operational_expense_total' => (int) OwnerExpense::query()
+                ->forOwner($ownerId)
+                ->nonOperational()
+                ->whereIn('status', [OwnerExpense::STATUS_POSTED, OwnerExpense::STATUS_CLOSED])
+                ->whereYear('expense_date', $now->year)
+                ->whereMonth('expense_date', $now->month)
+                ->sum('amount'),
+            'owner_final_income' => (int) ($closing?->owner_final_income ?? 0),
         ];
 
         $summary['distributable_income'] = $summary['net_income'] - $summary['operational_expense_total'];

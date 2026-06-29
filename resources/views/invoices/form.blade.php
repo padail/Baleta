@@ -17,7 +17,7 @@
     @php $oldItems = old('items', $invoice?->items?->toArray() ?? [['buyer_name'=>'','fish_type'=>'','box_count'=>'','price_per_box'=>'','notes'=>'']]); @endphp
     @foreach($oldItems as $i => $item)
         <tr class="item-row border-t">
-            <td class="p-2"><input name="items[{{ $i }}][buyer_name]" value="{{ $item['buyer_name'] ?? ($item['buyer']['name'] ?? '') }}" required class="rounded-lg border-slate-300 min-w-56"></td>
+            <td class="p-2"><input name="items[{{ $i }}][buyer_name]" value="{{ $item['buyer_name'] ?? ($item['buyer']['name'] ?? '') }}" required class="rounded-lg border-slate-300 min-w-56" placeholder="Contoh: Haji Usman"></td>
             <td class="p-2"><input name="items[{{ $i }}][fish_type]" value="{{ $item['fish_type'] ?? '' }}" class="rounded-lg border-slate-300 min-w-32"></td>
             <td class="p-2"><input type="number" min="1" name="items[{{ $i }}][box_count]" value="{{ $item['box_count'] ?? '' }}" oninput="recalc()" required class="box-count rounded-lg border-slate-300 w-24 text-right"></td>
             <td class="p-2"><input type="number" min="0" name="items[{{ $i }}][price_per_box]" value="{{ $item['price_per_box'] ?? '' }}" oninput="recalc()" required class="price-per-box rounded-lg border-slate-300 w-32 text-right"></td>

@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Models\FishDeliveryInvoice;
 use App\Models\MonthlyClosing;
 use App\Models\OwnerExpense;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use InvalidArgumentException;
 
@@ -18,88 +19,52 @@ class MonthlyClosingService
             ->where('status', FishDeliveryInvoice::STATUS_POSTED)
             ->whereYear('invoice_date', $year)
             ->whereMonth('invoice_date', $month)
-            ->orderBy('invoice_date')
             ->orderBy('ship_id')
+            ->orderBy('invoice_date')
+            ->orderBy('id')
             ->get();
 
-        $expenses = OwnerExpense::query()
-            ->with('ship')
+        $shipSummaries = $invoices
+            ->groupBy('ship_id')
+            ->map(function (Collection $group) {
+                $first = $group->first();
+
+                return [
+                    'ship_id' => (int) $first->ship_id,
+                    'ship_name' => $first->ship?->name ?? '-',
+                    'captain_id' => $first->captain_id ? (int) $first->captain_id : null,
+                    'captain_name' => $first->captain?->name ?? '-',
+                    'invoices' => $group->values(),
+                    'total_invoices' => $group->count(),
+                    'total_boxes' => (int) $group->sum('total_boxes'),
+                    'total_income' => (int) $group->sum('total_income'),
+                    'total_invoice_expense' => (int) $group->sum('total_expense'),
+                    'total_daily_net_income' => (int) $group->sum('net_income'),
+                ];
+            })
+            ->sortBy('ship_name')
+            ->values();
+
+        $nonOperationalExpenses = OwnerExpense::query()
             ->forOwner($ownerId)
+            ->nonOperational()
             ->posted()
             ->forPeriod($month, $year)
             ->orderBy('expense_date')
             ->orderBy('id')
             ->get();
 
-        $shipSummaries = $invoices
-            ->groupBy('ship_id')
-            ->map(function ($group) {
-                $first = $group->first();
-
-                return [
-                    'ship_id' => $first->ship_id,
-                    'ship_name' => $first->ship?->name ?? '-',
-                    'captain_name' => $first->captain?->name ?? '-',
-                    'total_invoices' => $group->count(),
-                    'total_boxes' => (int) $group->sum('total_boxes'),
-                    'total_income' => (int) $group->sum('total_income'),
-                    'total_expense' => (int) $group->sum('total_expense'),
-                    'net_income' => (int) $group->sum('net_income'),
-                ];
-            })
-            ->values();
-
-        $totalIncome = (int) $invoices->sum('total_income');
-        $totalExpense = (int) $invoices->sum('total_expense');
-        $dailyNetIncome = (int) $invoices->sum('net_income');
-        $operationalExpenseTotal = (int) $expenses
-            ->where('expense_type', OwnerExpense::TYPE_OPERATIONAL)
-            ->sum('amount');
-        $nonOperationalExpenseTotal = (int) $expenses
-            ->where('expense_type', OwnerExpense::TYPE_NON_OPERATIONAL)
-            ->sum('amount');
-        $distributableIncome = $dailyNetIncome - $operationalExpenseTotal;
-
-        $positiveShipNet = max(0, (int) $shipSummaries->sum(fn ($ship) => max(0, (int) $ship['net_income'])));
-        $remainingOperational = $operationalExpenseTotal;
-        $shipCount = $shipSummaries->count();
-        $shipIndex = 0;
-        $shipSummaries = $shipSummaries->map(function (array $ship) use ($operationalExpenseTotal, $positiveShipNet, &$remainingOperational, $shipCount, &$shipIndex) {
-            $shipIndex++;
-            $isLastShip = $shipIndex === $shipCount;
-
-            if ($isLastShip) {
-                $allocatedOperational = $remainingOperational;
-            } elseif ($positiveShipNet > 0) {
-                $allocatedOperational = (int) round($operationalExpenseTotal * (max(0, (int) $ship['net_income']) / $positiveShipNet));
-                $allocatedOperational = min($allocatedOperational, $remainingOperational);
-                $remainingOperational -= $allocatedOperational;
-            } else {
-                $allocatedOperational = 0;
-            }
-
-            $ship['operational_expense'] = $allocatedOperational;
-            $ship['distributable_income'] = (int) $ship['net_income'] - $allocatedOperational;
-
-            return $ship;
-        });
-
         return [
             'invoices' => $invoices,
-            'expenses' => $expenses,
-            'operational_expenses' => $expenses->where('expense_type', OwnerExpense::TYPE_OPERATIONAL)->values(),
-            'non_operational_expenses' => $expenses->where('expense_type', OwnerExpense::TYPE_NON_OPERATIONAL)->values(),
             'ship_summaries' => $shipSummaries,
+            'non_operational_expenses' => $nonOperationalExpenses,
             'total_ships' => $shipSummaries->count(),
             'total_invoices' => $invoices->count(),
             'total_boxes' => (int) $invoices->sum('total_boxes'),
-            'total_income' => $totalIncome,
-            'total_expense' => $totalExpense,
-            'net_income' => $dailyNetIncome,
-            'daily_net_income' => $dailyNetIncome,
-            'operational_expense_total' => $operationalExpenseTotal,
-            'distributable_income' => $distributableIncome,
-            'non_operational_expense_total' => $nonOperationalExpenseTotal,
+            'total_income' => (int) $invoices->sum('total_income'),
+            'total_expense' => (int) $invoices->sum('total_expense'),
+            'daily_net_income' => (int) $invoices->sum('net_income'),
+            'non_operational_expense_total' => (int) $nonOperationalExpenses->sum('amount'),
         ];
     }
 
@@ -109,7 +74,7 @@ class MonthlyClosingService
             $ownerId = (int) $payload['owner_id'];
             $month = (int) $payload['month'];
             $year = (int) $payload['year'];
-            $captainPercentage = (float) $payload['captain_percentage'];
+            $shipPayload = $payload['ships'] ?? [];
 
             $exists = MonthlyClosing::query()
                 ->where('owner_id', $ownerId)
@@ -119,7 +84,7 @@ class MonthlyClosingService
                 ->exists();
 
             if ($exists) {
-                throw new InvalidArgumentException('Tutup bulan untuk periode ini sudah dibuat. Satu owner hanya memiliki satu grand invoice per bulan.');
+                throw new InvalidArgumentException('Tutup bulan untuk periode ini sudah dibuat. Satu owner hanya memiliki satu rekap final per bulan.');
             }
 
             $preview = $this->preview($ownerId, $month, $year);
@@ -128,10 +93,48 @@ class MonthlyClosingService
                 throw new InvalidArgumentException('Tidak ada invoice posted untuk periode ini.');
             }
 
-            $captainBase = max(0, (int) $preview['distributable_income']);
-            $captainShare = (int) round($captainBase * $captainPercentage / 100);
-            $ownerShare = (int) $preview['distributable_income'] - $captainShare;
-            $ownerFinalIncome = $ownerShare - (int) $preview['non_operational_expense_total'];
+            $shipResults = [];
+            $totalShipOperationalExpense = 0;
+            $totalAfterShipOperational = 0;
+            $totalCaptainShare = 0;
+            $totalOwnerShare = 0;
+            $weightedCaptainPercentageTotal = 0;
+            $weightedCaptainBaseTotal = 0;
+
+            foreach ($preview['ship_summaries'] as $ship) {
+                $shipId = (int) $ship['ship_id'];
+                $input = $shipPayload[$shipId] ?? [];
+                $captainPercentage = max(0, min(100, (float) ($input['captain_percentage'] ?? 0)));
+                $operationalExpenses = $this->normalizeOperationalExpenses($input['operational_expenses'] ?? []);
+                $shipOperationalTotal = (int) collect($operationalExpenses)->sum('amount');
+                $netAfterOperational = (int) $ship['total_daily_net_income'] - $shipOperationalTotal;
+                $captainBase = max(0, $netAfterOperational);
+                $captainShare = (int) round($captainBase * $captainPercentage / 100);
+                $ownerShare = $netAfterOperational - $captainShare;
+
+                $totalShipOperationalExpense += $shipOperationalTotal;
+                $totalAfterShipOperational += $netAfterOperational;
+                $totalCaptainShare += $captainShare;
+                $totalOwnerShare += $ownerShare;
+                $weightedCaptainPercentageTotal += $captainPercentage * $captainBase;
+                $weightedCaptainBaseTotal += $captainBase;
+
+                $shipResults[] = [
+                    'ship' => $ship,
+                    'captain_percentage' => $captainPercentage,
+                    'operational_expenses' => $operationalExpenses,
+                    'ship_operational_total' => $shipOperationalTotal,
+                    'net_after_operational' => $netAfterOperational,
+                    'captain_share' => $captainShare,
+                    'owner_share' => $ownerShare,
+                ];
+            }
+
+            $nonOperationalTotal = (int) $preview['non_operational_expense_total'];
+            $ownerFinalIncome = $totalOwnerShare - $nonOperationalTotal;
+            $weightedCaptainPercentage = $weightedCaptainBaseTotal > 0
+                ? round($weightedCaptainPercentageTotal / $weightedCaptainBaseTotal, 2)
+                : 0;
 
             $closing = MonthlyClosing::create([
                 'owner_id' => $ownerId,
@@ -145,12 +148,12 @@ class MonthlyClosingService
                 'total_expense' => $preview['total_expense'],
                 'net_income' => $preview['daily_net_income'],
                 'daily_net_income' => $preview['daily_net_income'],
-                'operational_expense_total' => $preview['operational_expense_total'],
-                'distributable_income' => $preview['distributable_income'],
-                'captain_percentage' => $captainPercentage,
-                'captain_share' => $captainShare,
-                'owner_share' => $ownerShare,
-                'non_operational_expense_total' => $preview['non_operational_expense_total'],
+                'operational_expense_total' => $totalShipOperationalExpense,
+                'distributable_income' => $totalAfterShipOperational,
+                'captain_percentage' => $weightedCaptainPercentage,
+                'captain_share' => $totalCaptainShare,
+                'owner_share' => $totalOwnerShare,
+                'non_operational_expense_total' => $nonOperationalTotal,
                 'owner_final_income' => $ownerFinalIncome,
                 'status' => MonthlyClosing::STATUS_APPROVED,
                 'created_by' => auth()->id(),
@@ -159,65 +162,50 @@ class MonthlyClosingService
                 'notes' => $payload['notes'] ?? null,
             ]);
 
-            $positiveDailyNet = max(0, (int) $preview['invoices']->sum(fn ($invoice) => max(0, (int) $invoice->net_income)));
-            $remainingOperational = (int) $preview['operational_expense_total'];
-            $remainingCaptainShare = $captainShare;
-            $remainingOwnerShare = $ownerShare;
-            $invoiceCount = $preview['invoices']->count();
-            $loopIndex = 0;
+            foreach ($shipResults as $result) {
+                $ship = $result['ship'];
 
-            foreach ($preview['invoices'] as $invoice) {
-                $loopIndex++;
-                $isLastInvoice = $loopIndex === $invoiceCount;
-                $invoicePositiveNet = max(0, (int) $invoice->net_income);
-
-                if ($isLastInvoice) {
-                    $invoiceOperationalExpense = $remainingOperational;
-                } elseif ($positiveDailyNet > 0) {
-                    $invoiceOperationalExpense = (int) round($preview['operational_expense_total'] * ($invoicePositiveNet / $positiveDailyNet));
-                    $invoiceOperationalExpense = min($invoiceOperationalExpense, $remainingOperational);
-                } else {
-                    $invoiceOperationalExpense = 0;
-                }
-
-                $invoiceDistributableIncome = (int) $invoice->net_income - $invoiceOperationalExpense;
-
-                if ($isLastInvoice) {
-                    $invoiceCaptainShare = $remainingCaptainShare;
-                    $invoiceOwnerShare = $remainingOwnerShare;
-                } else {
-                    $invoiceCaptainShare = (int) round(max(0, $invoiceDistributableIncome) * $captainPercentage / 100);
-                    $invoiceOwnerShare = $invoiceDistributableIncome - $invoiceCaptainShare;
-                    $remainingCaptainShare -= $invoiceCaptainShare;
-                    $remainingOwnerShare -= $invoiceOwnerShare;
-                    $remainingOperational -= $invoiceOperationalExpense;
-                }
-
-                $closing->items()->create([
-                    'invoice_id' => $invoice->id,
-                    'ship_id' => $invoice->ship_id,
-                    'captain_id' => $invoice->captain_id,
-                    'ship_name' => $invoice->ship?->name,
-                    'captain_name' => $invoice->captain?->name,
-                    'invoice_date' => $invoice->invoice_date,
-                    'total_boxes' => $invoice->total_boxes,
-                    'total_income' => $invoice->total_income,
-                    'total_expense' => $invoice->total_expense,
-                    'net_income' => $invoice->net_income,
-                    'operational_expense' => $invoiceOperationalExpense,
-                    'distributable_income' => $invoiceDistributableIncome,
-                    'captain_percentage' => $captainPercentage,
-                    'captain_share' => $invoiceCaptainShare,
-                    'owner_share' => $invoiceOwnerShare,
+                $shipItem = $closing->shipItems()->create([
+                    'owner_id' => $ownerId,
+                    'ship_id' => $ship['ship_id'],
+                    'captain_id' => $ship['captain_id'],
+                    'ship_name' => $ship['ship_name'],
+                    'captain_name' => $ship['captain_name'],
+                    'total_invoices' => $ship['total_invoices'],
+                    'total_boxes' => $ship['total_boxes'],
+                    'total_income' => $ship['total_income'],
+                    'total_invoice_expense' => $ship['total_invoice_expense'],
+                    'total_daily_net_income' => $ship['total_daily_net_income'],
+                    'total_ship_operational_expense' => $result['ship_operational_total'],
+                    'net_after_ship_operational' => $result['net_after_operational'],
+                    'captain_percentage' => $result['captain_percentage'],
+                    'captain_share' => $result['captain_share'],
+                    'owner_share' => $result['owner_share'],
                 ]);
 
-                $invoice->update([
-                    'status' => FishDeliveryInvoice::STATUS_CLOSED,
-                    'closed_at' => now(),
-                ]);
+                foreach ($result['operational_expenses'] as $expense) {
+                    $shipItem->operationalExpenses()->create($expense);
+                }
+
+                foreach ($ship['invoices'] as $invoice) {
+                    $shipItem->invoiceItems()->create([
+                        'invoice_id' => $invoice->id,
+                        'invoice_number' => $invoice->invoice_number,
+                        'invoice_date' => $invoice->invoice_date,
+                        'total_boxes' => $invoice->total_boxes,
+                        'total_income' => $invoice->total_income,
+                        'total_expense' => $invoice->total_expense,
+                        'net_income' => $invoice->net_income,
+                    ]);
+
+                    $invoice->update([
+                        'status' => FishDeliveryInvoice::STATUS_CLOSED,
+                        'closed_at' => now(),
+                    ]);
+                }
             }
 
-            $preview['expenses']->each(function (OwnerExpense $expense) use ($closing) {
+            $preview['non_operational_expenses']->each(function (OwnerExpense $expense) use ($closing) {
                 $expense->update([
                     'monthly_closing_id' => $closing->id,
                     'status' => OwnerExpense::STATUS_CLOSED,
@@ -225,7 +213,32 @@ class MonthlyClosingService
                 ]);
             });
 
-            return $closing->load(['items.invoice', 'items.ship', 'items.captain', 'expenses.ship']);
+            return $closing->load([
+                'shipItems.invoiceItems.invoice',
+                'shipItems.operationalExpenses',
+                'nonOperationalExpenses',
+            ]);
         });
+    }
+
+    private function normalizeOperationalExpenses(array $expenses): array
+    {
+        return collect($expenses)
+            ->map(function ($expense) {
+                return [
+                    'description' => trim((string) ($expense['description'] ?? '')),
+                    'amount' => max(0, (int) ($expense['amount'] ?? 0)),
+                ];
+            })
+            ->filter(fn (array $expense) => $expense['description'] !== '' || $expense['amount'] > 0)
+            ->map(function (array $expense) {
+                if ($expense['description'] === '') {
+                    $expense['description'] = 'Biaya operasional kapal';
+                }
+
+                return $expense;
+            })
+            ->values()
+            ->all();
     }
 }

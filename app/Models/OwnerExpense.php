@@ -55,6 +55,11 @@ class OwnerExpense extends Model
         return $query->whereYear('expense_date', $year)->whereMonth('expense_date', $month);
     }
 
+    public function scopeNonOperational(Builder $query): Builder
+    {
+        return $query->where('expense_type', self::TYPE_NON_OPERATIONAL);
+    }
+
     public function owner(): BelongsTo
     {
         return $this->belongsTo(User::class, 'owner_id');
@@ -78,8 +83,8 @@ class OwnerExpense extends Model
     public function typeLabel(): string
     {
         return match ($this->expense_type) {
-            self::TYPE_OPERATIONAL => 'Operasional Bulanan',
-            self::TYPE_NON_OPERATIONAL => 'Non-Operasional',
+            self::TYPE_OPERATIONAL => 'Operasional Lama',
+            self::TYPE_NON_OPERATIONAL => 'Non-Operasional Owner',
             default => $this->expense_type,
         };
     }

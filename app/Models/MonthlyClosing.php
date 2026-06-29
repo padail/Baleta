@@ -70,9 +70,18 @@ class MonthlyClosing extends Model
         return $this->belongsTo(User::class, 'approved_by');
     }
 
+    /**
+     * Relasi lama. Disimpan agar aplikasi yang sudah pernah migrasi tidak rusak.
+     * Alur baru memakai shipItems().
+     */
     public function items(): HasMany
     {
         return $this->hasMany(MonthlyClosingItem::class);
+    }
+
+    public function shipItems(): HasMany
+    {
+        return $this->hasMany(MonthlyClosingShipItem::class);
     }
 
     public function expenses(): HasMany
@@ -80,13 +89,9 @@ class MonthlyClosing extends Model
         return $this->hasMany(OwnerExpense::class);
     }
 
-    public function operationalExpenses(): HasMany
-    {
-        return $this->hasMany(OwnerExpense::class)->where('expense_type', OwnerExpense::TYPE_OPERATIONAL);
-    }
-
     public function nonOperationalExpenses(): HasMany
     {
-        return $this->hasMany(OwnerExpense::class)->where('expense_type', OwnerExpense::TYPE_NON_OPERATIONAL);
+        return $this->hasMany(OwnerExpense::class)
+            ->where('expense_type', OwnerExpense::TYPE_NON_OPERATIONAL);
     }
 }

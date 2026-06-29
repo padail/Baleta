@@ -1,0 +1,6 @@
+<div><label class="block text-sm font-medium mb-1">Nama</label><input name="name" value="{{ old('name', $admin->name ?? '') }}" required class="w-full rounded-lg border-slate-300"></div>
+<div><label class="block text-sm font-medium mb-1">Email</label><input type="email" name="email" value="{{ old('email', $admin->email ?? '') }}" required class="w-full rounded-lg border-slate-300"></div>
+<div><label class="block text-sm font-medium mb-1">Nomor HP</label><input name="phone" value="{{ old('phone', $admin->phone ?? '') }}" class="w-full rounded-lg border-slate-300"></div>
+<div><label class="block text-sm font-medium mb-1">Password {{ $admin ? '(kosongkan jika tidak diubah)' : '' }}</label><input type="password" name="password" {{ $admin ? '' : 'required' }} class="w-full rounded-lg border-slate-300"></div>
+<div><label class="block text-sm font-medium mb-1">Konfirmasi Password</label><input type="password" name="password_confirmation" {{ $admin ? '' : 'required' }} class="w-full rounded-lg border-slate-300"></div>
+<label class="flex items-center gap-2 text-sm"><input type="checkbox" name="is_active" value="1" {{ old('is_active', $admin->is_active ?? true) ? 'checked' : '' }}> Aktif</label>

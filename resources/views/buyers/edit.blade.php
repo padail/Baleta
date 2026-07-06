@@ -10,6 +10,6 @@
     @csrf @method('PUT')
     @include('buyers.form')
 
-    <button class="w-full md:w-auto min-h-[52px] rounded-2xl bg-teal-600 px-6 text-white font-bold shadow-lg shadow-teal-700/20">Update</button>
+    <button class="w-full md:w-auto min-h-[52px] rounded-2xl bg-teal-600 px-6 text-white font-bold shadow-lg shadow-teal-700/20">Simpan Perubahan</button>
 </form>
 @endsection

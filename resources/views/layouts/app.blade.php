@@ -2,17 +2,17 @@
 <html lang="id">
 <head>
     <meta charset="UTF-8">
-    <title>@yield('title', 'Aplikasi Nelayan')</title>
+    <title>@yield('title', 'Baleta')</title>
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
     <meta name="theme-color" content="#073b3a">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="description" content="Aplikasi pencatatan invoice harian, rekap kapal, tutup bulan, dan pengeluaran nelayan.">
+    <meta name="description" content="Baleta adalah aplikasi pencatatan invoice harian, rekap kapal, tutup bulan, dan pengeluaran nelayan.">
     <link rel="manifest" href="{{ asset('manifest.webmanifest') }}">
     <link rel="icon" type="image/png" sizes="192x192" href="{{ asset('icons/pwa-192.png') }}">
     <link rel="apple-touch-icon" sizes="180x180" href="{{ asset('icons/pwa-180.png') }}">
     <meta name="mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-title" content="Nelayan">
+    <meta name="apple-mobile-web-app-title" content="Baleta">
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     <style>
         :root {
@@ -44,17 +44,16 @@
 </head>
 @php
     $navItems = [
-        ['label' => 'Home', 'route' => 'dashboard', 'active' => request()->routeIs('dashboard'), 'icon' => 'home'],
+        ['label' => 'Beranda', 'route' => 'dashboard', 'active' => request()->routeIs('dashboard'), 'icon' => 'home'],
         ['label' => 'Invoice', 'route' => 'invoices.index', 'active' => request()->routeIs('invoices.*') && !request()->routeIs('invoices.create'), 'icon' => 'receipt'],
-        ['label' => 'Tutup', 'route' => 'monthly-closings.index', 'active' => request()->routeIs('monthly-closings.*'), 'icon' => 'calendar'],
-        ['label' => 'Non-Op', 'route' => 'expenses.index', 'active' => request()->routeIs('expenses.*'), 'icon' => 'wallet'],
+        ['label' => 'Tutup Bulan', 'route' => 'monthly-closings.index', 'active' => request()->routeIs('monthly-closings.*'), 'icon' => 'calendar'],
+        ['label' => 'Biaya', 'route' => 'expenses.index', 'active' => request()->routeIs('expenses.*'), 'icon' => 'wallet'],
     ];
     $quickItems = [
         ['label' => 'Kapal', 'route' => 'ships.index', 'active' => request()->routeIs('ships.*'), 'icon' => 'ship', 'hint' => 'Armada'],
-        ['label' => 'Kapten', 'route' => 'captains.index', 'active' => request()->routeIs('captains.*'), 'icon' => 'anchor', 'hint' => 'Awak'],
         ['label' => 'Invoice Baru', 'route' => 'invoices.create', 'active' => request()->routeIs('invoices.create'), 'icon' => 'plus', 'hint' => 'Catat'],
         ['label' => 'Tutup Bulan', 'route' => 'monthly-closings.create', 'active' => request()->routeIs('monthly-closings.create'), 'icon' => 'calendar', 'hint' => 'Rekap'],
-        ['label' => 'Non-Op Baru', 'route' => 'expenses.create', 'active' => request()->routeIs('expenses.create'), 'icon' => 'wallet', 'hint' => 'Biaya'],
+        ['label' => 'Biaya Terpisah', 'route' => 'expenses.create', 'active' => request()->routeIs('expenses.create'), 'icon' => 'wallet', 'hint' => 'Catat'],
     ];
     $svgIcon = function (string $name, string $class = 'h-5 w-5') {
         $icons = [
@@ -80,8 +79,8 @@
                         {!! $svgIcon('ship', 'h-7 w-7') !!}
                     </div>
                     <div>
-                        <div class="font-black text-lg leading-tight">Nelayan App</div>
-                        <div class="text-xs text-teal-100/85">Keuangan kapal nelayan</div>
+                        <div class="font-black text-lg leading-tight">Baleta</div>
+                        <div class="text-xs text-teal-100/85">Catatan kapal nelayan</div>
                     </div>
                 </a>
             </div>
@@ -89,12 +88,11 @@
                 @foreach($navItems as $item)
                     <a href="{{ route($item['route']) }}" class="flex items-center gap-3 rounded-2xl px-4 py-3 transition {{ $item['active'] ? 'bg-white text-[#073b3a] font-black shadow-lg shadow-black/10' : 'text-teal-50/90 hover:bg-white/10' }}">
                         <span class="{{ $item['active'] ? 'text-teal-700' : 'text-teal-100' }}">{!! $svgIcon($item['icon']) !!}</span>
-                        <span>{{ $item['label'] === 'Home' ? 'Dashboard' : ($item['label'] === 'Tutup' ? 'Tutup Bulan' : ($item['label'] === 'Non-Op' ? 'Non-Operasional' : 'Invoice Harian')) }}</span>
+                        <span>{{ $item['label'] === 'Biaya' ? 'Non-Operasional' : $item['label'] }}</span>
                     </a>
                 @endforeach
                 <div class="pt-4 mt-4 border-t border-white/10 text-xs uppercase tracking-wider text-teal-100/60 px-4">Master Data</div>
                 <a href="{{ route('ships.index') }}" class="flex items-center gap-3 rounded-2xl px-4 py-3 {{ request()->routeIs('ships.*') ? 'bg-white text-[#073b3a] font-black' : 'text-teal-50/90 hover:bg-white/10' }}"><span>{!! $svgIcon('ship') !!}</span>Kapal</a>
-                <a href="{{ route('captains.index') }}" class="flex items-center gap-3 rounded-2xl px-4 py-3 {{ request()->routeIs('captains.*') ? 'bg-white text-[#073b3a] font-black' : 'text-teal-50/90 hover:bg-white/10' }}"><span>{!! $svgIcon('anchor') !!}</span>Kapten</a>
                 @if(auth()->user()?->isOwner())
                     <a href="{{ route('admins.index') }}" class="flex items-center gap-3 rounded-2xl px-4 py-3 {{ request()->routeIs('admins.*') ? 'bg-white text-[#073b3a] font-black' : 'text-teal-50/90 hover:bg-white/10' }}"><span>{!! $svgIcon('user') !!}</span>Admin</a>
                 @endif
@@ -120,7 +118,7 @@
                                 {!! $svgIcon('ship', 'h-6 w-6') !!}
                             </div>
                             <div class="min-w-0">
-                                <div class="font-black leading-tight truncate">Nelayan App</div>
+                                <div class="font-black leading-tight truncate">Baleta</div>
                                 <div class="text-[11px] text-teal-100/85 truncate">{{ auth()->user()->name ?? '' }} · {{ auth()->user()->role ?? '' }}</div>
                             </div>
                         </a>
@@ -130,24 +128,19 @@
                         </form>
                     </div>
                 </div>
-                <div class="bg-white/10 border-t border-white/10">
-                    <div class="overflow-x-auto app-scrollbar px-4 py-3 scroll-px-4 snap-x">
-                        <div class="flex gap-2 min-w-max">
-                            @foreach($quickItems as $item)
-                                <a href="{{ route($item['route']) }}" class="snap-card min-w-[108px] rounded-[1.15rem] px-3 py-2.5 text-left transition {{ $item['active'] ? 'bg-white text-[#073b3a] shadow-lg shadow-black/10' : 'bg-white/12 text-white ring-1 ring-white/10' }}">
-                                    <div class="flex items-center gap-2">
-                                        <span class="h-8 w-8 rounded-xl flex items-center justify-center {{ $item['active'] ? 'bg-teal-50 text-teal-700' : 'bg-white/10 text-teal-50' }}">{!! $svgIcon($item['icon'], 'h-4 w-4') !!}</span>
-                                        <span class="min-w-0">
-                                            <span class="block text-[11px] opacity-70 leading-none">{{ $item['hint'] }}</span>
-                                            <span class="block text-xs font-black leading-tight truncate">{{ $item['label'] }}</span>
-                                        </span>
-                                    </div>
-                                </a>
-                            @endforeach
+                <div class="px-4 pb-3">
+                    <button type="button" data-mobile-menu-button class="w-full rounded-2xl bg-white/12 ring-1 ring-white/10 px-4 py-3 text-sm font-black text-white flex items-center justify-between">
+                        <span class="flex items-center gap-2">{!! $svgIcon('user', 'h-4 w-4') !!} Menu Pengaturan</span>
+                        <span data-mobile-menu-chevron>⌄</span>
+                    </button>
+                    <div data-mobile-menu-panel hidden class="mt-3 rounded-[1.35rem] bg-white text-slate-900 p-3 shadow-xl shadow-teal-950/20">
+                        <div class="grid grid-cols-2 gap-2 text-sm">
+                            <a href="{{ route('ships.index') }}" class="rounded-2xl bg-teal-50 px-3 py-3 font-bold text-teal-800 flex items-center gap-2">{!! $svgIcon('ship', 'h-4 w-4') !!} Kapal</a>
+                            <a href="{{ route('invoices.create') }}" class="rounded-2xl bg-teal-50 px-3 py-3 font-bold text-teal-800 flex items-center gap-2">{!! $svgIcon('plus', 'h-4 w-4') !!} Invoice Baru</a>
+                            <a href="{{ route('monthly-closings.create') }}" class="rounded-2xl bg-teal-50 px-3 py-3 font-bold text-teal-800 flex items-center gap-2">{!! $svgIcon('calendar', 'h-4 w-4') !!} Tutup Bulan</a>
+                            <a href="{{ route('expenses.index') }}" class="rounded-2xl bg-amber-50 px-3 py-3 font-bold text-amber-800 flex items-center gap-2">{!! $svgIcon('wallet', 'h-4 w-4') !!} Non-Operasional</a>
                             @if(auth()->user()?->isOwner())
-                                <a href="{{ route('admins.index') }}" class="snap-card min-w-[108px] rounded-[1.15rem] px-3 py-2.5 {{ request()->routeIs('admins.*') ? 'bg-white text-[#073b3a] shadow-lg shadow-black/10' : 'bg-white/12 text-white ring-1 ring-white/10' }}">
-                                    <div class="flex items-center gap-2"><span class="h-8 w-8 rounded-xl flex items-center justify-center {{ request()->routeIs('admins.*') ? 'bg-teal-50 text-teal-700' : 'bg-white/10 text-teal-50' }}">{!! $svgIcon('user', 'h-4 w-4') !!}</span><span><span class="block text-[11px] opacity-70 leading-none">Akses</span><span class="block text-xs font-black leading-tight">Admin</span></span></div>
-                                </a>
+                                <a href="{{ route('admins.index') }}" class="rounded-2xl bg-slate-50 px-3 py-3 font-bold text-slate-700 flex items-center gap-2">{!! $svgIcon('user', 'h-4 w-4') !!} Admin</a>
                             @endif
                         </div>
                     </div>
@@ -180,11 +173,11 @@
     <div data-pwa-install-card hidden class="fixed inset-x-4 bottom-24 z-[60] md:left-auto md:right-6 md:bottom-6 md:w-[360px] rounded-[1.5rem] bg-[#fffdfa] border border-teal-900/10 shadow-2xl shadow-teal-950/25 p-4">
         <div class="flex gap-3">
             <div class="h-12 w-12 rounded-2xl bg-[#073b3a] flex items-center justify-center shrink-0">
-                <img src="{{ asset('icons/pwa-192.png') }}" alt="Nelayan App" class="h-9 w-9 rounded-xl">
+                <img src="{{ asset('icons/pwa-192.png') }}" alt="Baleta" class="h-9 w-9 rounded-xl">
             </div>
             <div class="min-w-0 flex-1">
-                <div class="font-black text-slate-900 leading-tight">Pasang Nelayan App</div>
-                <p class="text-xs text-slate-500 mt-1 leading-relaxed">Buka dari layar utama HP seperti aplikasi biasa.</p>
+                <div class="font-black text-slate-900 leading-tight">Pasang Baleta</div>
+                <p class="text-xs text-slate-500 mt-1 leading-relaxed">Buka Baleta dari layar utama HP seperti aplikasi biasa.</p>
                 <div data-pwa-ios-guide hidden class="mt-2 rounded-2xl bg-teal-50 text-teal-900 text-xs p-3 leading-relaxed">
                     Di iPhone, tekan tombol <b>Bagikan</b>, lalu pilih <b>Tambahkan ke Layar Utama</b>.
                 </div>
@@ -197,6 +190,25 @@
     </div>
 
 <script src="{{ asset('pwa-register.js') }}" defer></script>
+
+<script>
+(function () {
+    const button = document.querySelector('[data-mobile-menu-button]');
+    const panel = document.querySelector('[data-mobile-menu-panel]');
+    const chevron = document.querySelector('[data-mobile-menu-chevron]');
+    if (!button || !panel) return;
+    button.addEventListener('click', function () {
+        const isHidden = panel.hasAttribute('hidden');
+        if (isHidden) {
+            panel.removeAttribute('hidden');
+            if (chevron) chevron.textContent = '⌃';
+        } else {
+            panel.setAttribute('hidden', 'hidden');
+            if (chevron) chevron.textContent = '⌄';
+        }
+    });
+})();
+</script>
 
 <script>
 (function () {

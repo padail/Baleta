@@ -207,12 +207,20 @@ class FishDeliveryInvoiceController extends Controller
         return redirect()->route('invoices.index')->with('success', 'Invoice berhasil dibatalkan.');
     }
 
-    public function print(FishDeliveryInvoice $invoice)
+    public function screenshot(FishDeliveryInvoice $invoice)
     {
         $this->authorizeOwner($invoice);
         $invoice->load(['ship', 'captain', 'items.buyer', 'expenses']);
 
-        return view('invoices.print', compact('invoice'));
+        return view('invoices.screenshot', compact('invoice'));
+    }
+
+    /**
+     * Backward compatibility untuk link lama.
+     */
+    public function print(FishDeliveryInvoice $invoice)
+    {
+        return $this->screenshot($invoice);
     }
 
     private function authorizeOwner(FishDeliveryInvoice $invoice): void

@@ -26,9 +26,9 @@ class DashboardController extends Controller
 
         $closing = MonthlyClosing::query()
             ->forOwner($ownerId)
-            ->where('month', $now->month)
-            ->where('year', $now->year)
             ->where('status', MonthlyClosing::STATUS_APPROVED)
+            ->latest('closing_period_number')
+            ->latest('id')
             ->first();
 
         $summary = [

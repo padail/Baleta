@@ -1,5 +1,5 @@
 @extends('layouts.app')
-@section('title', 'Dashboard')
+@section('title', 'Beranda')
 @section('content')
 @php
     $icon = function (string $name) {
@@ -47,7 +47,7 @@
     @if(auth()->user()?->isOwner())
         <a href="{{ route('admins.index') }}" class="rounded-[1.5rem] bg-white p-4 shadow-sm border border-teal-900/5 flex items-center justify-between hover:border-teal-200 transition"><div class="flex items-center gap-3"><span class="h-11 w-11 rounded-2xl bg-amber-50 text-amber-700 flex items-center justify-center">{!! $icon('anchor') !!}</span><div><div class="font-black">Admin</div><div class="text-sm text-slate-500">Akun input data</div></div></div><span class="text-teal-700">{!! $icon('arrow') !!}</span></a>
     @else
-        <a href="{{ route('captains.index') }}" class="rounded-[1.5rem] bg-white p-4 shadow-sm border border-teal-900/5 flex items-center justify-between hover:border-teal-200 transition"><div class="flex items-center gap-3"><span class="h-11 w-11 rounded-2xl bg-amber-50 text-amber-700 flex items-center justify-center">{!! $icon('anchor') !!}</span><div><div class="font-black">Kapten</div><div class="text-sm text-slate-500">Data kapten kapal</div></div></div><span class="text-teal-700">{!! $icon('arrow') !!}</span></a>
+        <a href="{{ route('ships.index') }}" class="rounded-[1.5rem] bg-white p-4 shadow-sm border border-teal-900/5 flex items-center justify-between hover:border-teal-200 transition"><div class="flex items-center gap-3"><span class="h-11 w-11 rounded-2xl bg-amber-50 text-amber-700 flex items-center justify-center">{!! $icon('ship') !!}</span><div><div class="font-black">Kapal</div><div class="text-sm text-slate-500">Data kapal dan kapten</div></div></div><span class="text-teal-700">{!! $icon('arrow') !!}</span></a>
     @endif
 </section>
 
@@ -61,7 +61,7 @@
             @forelse($latestInvoices as $invoice)
                 <a href="{{ route('invoices.show', $invoice) }}" class="block p-4 hover:bg-teal-50/50">
                     <div class="flex justify-between gap-4">
-                        <div class="min-w-0"><div class="font-black text-teal-700 truncate">{{ $invoice->invoice_number }}</div><div class="text-xs text-slate-500 mt-1">{{ $invoice->invoice_date->format('d/m/Y') }} · {{ $invoice->ship?->name }} · {{ strtoupper($invoice->status) }}</div></div>
+                        <div class="min-w-0"><div class="font-black text-teal-700 truncate">{{ $invoice->invoice_number }}</div><div class="text-xs text-slate-500 mt-1">{{ $invoice->invoice_date->format('d/m/Y') }} · {{ $invoice->ship?->name }} · {{ $invoice->status_label }}</div></div>
                         <div class="text-right shrink-0"><div class="font-black">{{ \App\Support\Money::rupiah($invoice->net_income) }}</div><div class="text-[11px] text-slate-400">bersih</div></div>
                     </div>
                 </a>
@@ -75,8 +75,8 @@
         <div class="mt-4 space-y-3 text-sm">
             <div class="flex justify-between gap-3"><span class="text-slate-500">Operasional Kapal</span><strong class="text-amber-700">{{ \App\Support\Money::rupiah($summary['operational_expense_total']) }}</strong></div>
             <div class="flex justify-between gap-3"><span class="text-slate-500">Jasa Kapten</span><strong>{{ \App\Support\Money::rupiah($summary['captain_share']) }}</strong></div>
-            <div class="flex justify-between gap-3"><span class="text-slate-500">Owner dari Kapal</span><strong class="text-emerald-700">{{ \App\Support\Money::rupiah($summary['owner_share']) }}</strong></div>
-            <div class="pt-3 border-t flex justify-between gap-3"><span class="text-slate-500">Non-Op Terpisah</span><strong class="text-rose-700">{{ \App\Support\Money::rupiah($summary['non_operational_expense_total']) }}</strong></div>
+            <div class="flex justify-between gap-3"><span class="text-slate-500">Hasil Pemilik dari Kapal</span><strong class="text-emerald-700">{{ \App\Support\Money::rupiah($summary['owner_share']) }}</strong></div>
+            <div class="pt-3 border-t flex justify-between gap-3"><span class="text-slate-500">Non-Operasional Terpisah</span><strong class="text-rose-700">{{ \App\Support\Money::rupiah($summary['non_operational_expense_total']) }}</strong></div>
         </div>
     </div>
 </section>

@@ -33,15 +33,9 @@ class ShipController extends Controller
         return view('ships.index', compact('ships'));
     }
 
-    public function create(Request $request)
+    public function create()
     {
-        $captains = Captain::query()
-            ->forOwner($request->user()->activeOwnerId())
-            ->where('is_active', true)
-            ->orderBy('name')
-            ->get();
-
-        return view('ships.create', compact('captains'));
+        return view('ships.create');
     }
 
     public function store(StoreShipRequest $request, ShipCaptainAssignmentService $assignmentService, AuditLogService $audit)
@@ -56,10 +50,8 @@ class ShipController extends Controller
             'is_active' => $request->boolean('is_active', true),
         ]);
 
-        if ($request->filled('captain_id')) {
-            $captain = Captain::query()->forOwner($ownerId)->findOrFail($request->captain_id);
-            $assignmentService->assign($ship, $captain, $request->captain_start_date);
-        }
+        $captain = $this->findOrCreateCaptain($ownerId, $request->captain_name, $request->captain_phone);
+        $assignmentService->assign($ship, $captain, $request->captain_start_date);
 
         $audit->record('ship.created', $ship, null, $ship->toArray());
 
@@ -76,19 +68,12 @@ class ShipController extends Controller
         return view('ships.show', compact('ship', 'invoices'));
     }
 
-    public function edit(Request $request, Ship $ship)
+    public function edit(Ship $ship)
     {
         $this->authorizeOwner($ship);
+        $ship->load('activeCaptainAssignment.captain');
 
-        $captains = Captain::query()
-            ->forOwner($request->user()->activeOwnerId())
-            ->where('is_active', true)
-            ->orderBy('name')
-            ->get();
-
-        $ship->load('activeCaptainAssignment');
-
-        return view('ships.edit', compact('ship', 'captains'));
+        return view('ships.edit', compact('ship'));
     }
 
     public function update(UpdateShipRequest $request, Ship $ship, ShipCaptainAssignmentService $assignmentService, AuditLogService $audit)
@@ -104,12 +89,14 @@ class ShipController extends Controller
             'is_active' => $request->boolean('is_active'),
         ]);
 
-        if ($request->filled('captain_id')) {
-            $currentCaptainId = $ship->activeCaptainAssignment?->captain_id;
-            if ((int) $currentCaptainId !== (int) $request->captain_id) {
-                $captain = Captain::query()->forOwner($ownerId)->findOrFail($request->captain_id);
-                $assignmentService->assign($ship, $captain, $request->captain_start_date);
-            }
+        $ship->load('activeCaptainAssignment.captain');
+        $captain = $this->findOrCreateCaptain($ownerId, $request->captain_name, $request->captain_phone);
+        $currentCaptainId = $ship->activeCaptainAssignment?->captain_id;
+
+        if ((int) $currentCaptainId !== (int) $captain->id) {
+            $assignmentService->assign($ship, $captain, $request->captain_start_date);
+        } elseif ($request->filled('captain_phone') && $captain->phone !== $request->captain_phone) {
+            $captain->update(['phone' => $request->captain_phone]);
         }
 
         $audit->record('ship.updated', $ship, $old, $ship->fresh()->toArray());
@@ -124,6 +111,34 @@ class ShipController extends Controller
         $audit->record('ship.deactivated', $ship, null, ['is_active' => false]);
 
         return redirect()->route('ships.index')->with('success', 'Kapal berhasil dinonaktifkan.');
+    }
+
+    private function findOrCreateCaptain(int $ownerId, string $name, ?string $phone = null): Captain
+    {
+        $name = trim($name);
+        $phone = $phone ? trim($phone) : null;
+
+        $captain = Captain::query()
+            ->forOwner($ownerId)
+            ->whereRaw('LOWER(name) = ?', [mb_strtolower($name)])
+            ->first();
+
+        if ($captain) {
+            $updates = ['is_active' => true];
+            if ($phone && $captain->phone !== $phone) {
+                $updates['phone'] = $phone;
+            }
+            $captain->update($updates);
+
+            return $captain;
+        }
+
+        return Captain::create([
+            'owner_id' => $ownerId,
+            'name' => $name,
+            'phone' => $phone,
+            'is_active' => true,
+        ]);
     }
 
     private function authorizeOwner(Ship $ship): void

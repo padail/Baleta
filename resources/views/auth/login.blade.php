@@ -2,7 +2,7 @@
 <html lang="id">
 <head>
     <meta charset="UTF-8">
-    <title>Login - Aplikasi Nelayan</title>
+    <title>Masuk - Baleta</title>
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
     <meta name="theme-color" content="#073b3a">
     <meta name="description" content="Aplikasi pencatatan invoice harian, rekap kapal, tutup bulan, dan pengeluaran nelayan.">
@@ -11,7 +11,7 @@
     <link rel="apple-touch-icon" sizes="180x180" href="{{ asset('icons/pwa-180.png') }}">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-title" content="Nelayan">
+    <meta name="apple-mobile-web-app-title" content="Baleta">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     <style>
@@ -25,7 +25,7 @@
                 <div class="h-14 w-14 rounded-[1.35rem] bg-white/15 ring-1 ring-white/20 flex items-center justify-center text-teal-50 mb-4">
                     <svg class="h-8 w-8" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 17h16l-2 4H6l-2-4z"/><path d="M7 17V8h7l3 5v4"/><path d="M9 11h4"/></svg>
                 </div>
-                <h1 class="text-3xl font-black leading-tight">Masuk ke Nelayan App</h1>
+                <h1 class="text-3xl font-black leading-tight">Masuk ke Baleta</h1>
                 <p class="text-teal-50/80 mt-2 text-sm">Kelola invoice harian, rekap kapal, dan tutup bulan langsung dari HP.</p>
             </div>
             <div class="bg-[#fffdfa] rounded-[2rem] shadow-2xl p-5 md:p-7 border border-white/70">
@@ -35,21 +35,21 @@
                 <form method="POST" action="{{ route('login') }}" class="space-y-4">
                     @csrf
                     <div>
-                        <label class="block text-sm font-bold text-slate-700 mb-2">Email</label>
-                        <input type="email" name="email" value="{{ old('email') }}" required autofocus class="w-full min-h-[52px] rounded-2xl border-slate-200 bg-stone-50 px-4 text-base focus:border-teal-600 focus:ring-teal-600" placeholder="owner@email.com">
+                        <label class="block text-sm font-bold text-slate-700 mb-2">Surel</label>
+                        <input type="email" name="email" value="{{ old('email') }}" required autofocus class="w-full min-h-[52px] rounded-2xl border-slate-200 bg-stone-50 px-4 text-base focus:border-teal-600 focus:ring-teal-600" placeholder="email@contoh.com">
                     </div>
                     <div>
-                        <label class="block text-sm font-bold text-slate-700 mb-2">Password</label>
+                        <label class="block text-sm font-bold text-slate-700 mb-2">Kata sandi</label>
                         <input type="password" name="password" required class="w-full min-h-[52px] rounded-2xl border-slate-200 bg-stone-50 px-4 text-base focus:border-teal-600 focus:ring-teal-600" placeholder="••••••••">
                     </div>
                     <div class="flex items-center justify-between gap-3 text-sm">
                         <label class="flex items-center gap-2 text-slate-600"><input type="checkbox" name="remember" class="rounded border-slate-300 text-teal-600 focus:ring-teal-600"> Ingat saya</label>
-                        <a href="{{ route('password.request') }}" class="font-semibold text-teal-700">Lupa password?</a>
+                        <a href="{{ route('password.request') }}" class="font-semibold text-teal-700">Lupa kata sandi?</a>
                     </div>
                     <button class="w-full min-h-[54px] rounded-2xl bg-teal-600 text-white font-black text-base shadow-lg shadow-teal-700/25">Masuk</button>
                 </form>
                 <div class="mt-6 text-center text-sm text-slate-600">
-                    Belum punya akun owner?
+                    Belum punya akun pemilik?
                     <a href="{{ route('register') }}" class="text-teal-700 font-black">Daftar</a>
                 </div>
             </div>

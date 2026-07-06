@@ -1,6 +1,6 @@
 {
-  "name": "Aplikasi Nelayan",
-  "short_name": "Nelayan",
+  "name": "Baleta",
+  "short_name": "Baleta",
   "description": "Aplikasi pencatatan invoice harian, rekap kapal, tutup bulan, dan pengeluaran nelayan.",
   "id": "/dashboard",
   "start_url": "/dashboard?source=pwa",
@@ -46,9 +46,9 @@
   ],
   "shortcuts": [
     {
-      "name": "Dashboard",
-      "short_name": "Home",
-      "description": "Buka ringkasan aplikasi",
+      "name": "Beranda",
+      "short_name": "Beranda",
+      "description": "Buka ringkasan Baleta",
       "url": "/dashboard",
       "icons": [
         {

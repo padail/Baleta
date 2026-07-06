@@ -23,6 +23,7 @@ Route::middleware(['auth', EnsureUserIsActive::class, PreventDuplicateSubmission
     Route::resource('captains', CaptainController::class)->except(['show']);
     Route::resource('buyers', BuyerController::class)->except(['show']);
 
+    Route::get('expenses/recap/screenshot', [OwnerExpenseController::class, 'screenshot'])->name('expenses.screenshot');
     Route::get('expenses/recap/print', [OwnerExpenseController::class, 'print'])->name('expenses.print');
     Route::resource('expenses', OwnerExpenseController::class)->parameters(['expenses' => 'expense'])->except(['show']);
 
@@ -33,8 +34,11 @@ Route::middleware(['auth', EnsureUserIsActive::class, PreventDuplicateSubmission
     Route::resource('invoices', FishDeliveryInvoiceController::class);
     Route::post('invoices/{invoice}/post', [FishDeliveryInvoiceController::class, 'post'])->name('invoices.post');
     Route::post('invoices/{invoice}/cancel', [FishDeliveryInvoiceController::class, 'cancel'])->name('invoices.cancel');
+    Route::get('invoices/{invoice}/screenshot', [FishDeliveryInvoiceController::class, 'screenshot'])->name('invoices.screenshot');
     Route::get('invoices/{invoice}/print', [FishDeliveryInvoiceController::class, 'print'])->name('invoices.print');
 
-    Route::resource('monthly-closings', MonthlyClosingController::class)->parameters(['monthly-closings' => 'monthlyClosing'])->only(['index', 'create', 'store', 'show']);
+    Route::resource('monthly-closings', MonthlyClosingController::class)->parameters(['monthly-closings' => 'monthlyClosing'])->except(['destroy']);
+    Route::delete('monthly-closings/{monthlyClosing}', [MonthlyClosingController::class, 'destroy'])->name('monthly-closings.destroy');
+    Route::get('monthly-closings/{monthlyClosing}/screenshot', [MonthlyClosingController::class, 'screenshot'])->name('monthly-closings.screenshot');
     Route::get('monthly-closings/{monthlyClosing}/print', [MonthlyClosingController::class, 'print'])->name('monthly-closings.print');
 });

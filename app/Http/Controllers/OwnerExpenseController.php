@@ -111,7 +111,7 @@ class OwnerExpenseController extends Controller
         return redirect()->route('expenses.index')->with('success', 'Pengeluaran non-operasional berhasil dibatalkan.');
     }
 
-    public function print(Request $request)
+    public function screenshot(Request $request)
     {
         $ownerId = $request->user()->activeOwnerId();
 
@@ -127,7 +127,15 @@ class OwnerExpenseController extends Controller
 
         $total = (int) $expenses->sum('amount');
 
-        return view('owner-expenses.print', compact('expenses', 'total'));
+        return view('owner-expenses.screenshot', compact('expenses', 'total'));
+    }
+
+    /**
+     * Backward compatibility untuk link lama.
+     */
+    public function print(Request $request)
+    {
+        return $this->screenshot($request);
     }
 
     private function authorizeOwner(OwnerExpense $expense): void

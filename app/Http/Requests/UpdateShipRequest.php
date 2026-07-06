@@ -21,9 +21,17 @@ class UpdateShipRequest extends FormRequest
             'code' => ['nullable', 'string', 'max:50', Rule::unique('ships', 'code')->where('owner_id', $ownerId)->ignore($ship?->id)],
             'name' => ['required', 'string', 'max:255'],
             'description' => ['nullable', 'string', 'max:1000'],
-            'captain_id' => ['nullable', Rule::exists('captains', 'id')->where('owner_id', $ownerId)],
+            'captain_name' => ['required', 'string', 'max:255'],
+            'captain_phone' => ['nullable', 'string', 'max:30'],
             'captain_start_date' => ['nullable', 'date'],
             'is_active' => ['nullable', 'boolean'],
+        ];
+    }
+
+    public function messages(): array
+    {
+        return [
+            'captain_name.required' => 'Nama kapten wajib diisi.',
         ];
     }
 }

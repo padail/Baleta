@@ -90,6 +90,17 @@ class FishDeliveryInvoice extends Model
         return $this->hasMany(InvoiceExpense::class, 'invoice_id');
     }
 
+    public function getStatusLabelAttribute(): string
+    {
+        return match ($this->status) {
+            self::STATUS_DRAFT => 'Draft',
+            self::STATUS_POSTED => 'Sudah Diposting',
+            self::STATUS_CLOSED => 'Sudah Ditutup',
+            self::STATUS_CANCELLED => 'Dibatalkan',
+            default => ucfirst((string) $this->status),
+        };
+    }
+
     public function isEditable(): bool
     {
         return $this->status === self::STATUS_DRAFT;

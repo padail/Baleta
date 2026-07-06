@@ -19,8 +19,12 @@ class MonthlyClosing extends Model
     protected $fillable = [
         'owner_id',
         'closing_number',
+        'closing_period_number',
+        'period_label',
         'month',
         'year',
+        'period_started_at',
+        'period_ended_at',
         'total_ships',
         'total_invoices',
         'total_boxes',
@@ -39,6 +43,7 @@ class MonthlyClosing extends Model
         'created_by',
         'approved_by',
         'approved_at',
+        'closed_at',
         'notes',
     ];
 
@@ -46,6 +51,9 @@ class MonthlyClosing extends Model
     {
         return [
             'approved_at' => 'datetime',
+            'closed_at' => 'datetime',
+            'period_started_at' => 'date',
+            'period_ended_at' => 'date',
             'captain_percentage' => 'decimal:2',
         ];
     }
@@ -53,6 +61,21 @@ class MonthlyClosing extends Model
     public function scopeForOwner(Builder $query, int $ownerId): Builder
     {
         return $query->where('owner_id', $ownerId);
+    }
+
+
+    public function getDisplayPeriodAttribute(): string
+    {
+        return $this->period_label ?: 'Tutup Bulan '.($this->closing_period_number ?: '-');
+    }
+
+    public function getDisplayDateRangeAttribute(): string
+    {
+        if ($this->period_started_at && $this->period_ended_at) {
+            return $this->period_started_at->format('d/m/Y').' sampai '.$this->period_ended_at->format('d/m/Y');
+        }
+
+        return $this->closed_at?->format('d/m/Y') ?: $this->created_at?->format('d/m/Y') ?: '-';
     }
 
     public function owner(): BelongsTo

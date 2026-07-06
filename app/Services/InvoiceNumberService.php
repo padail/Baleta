@@ -21,17 +21,24 @@ class InvoiceNumberService
         return 'INV-'.$ym.'-'.str_pad((string) $count, 4, '0', STR_PAD_LEFT);
     }
 
-    public function makeClosingNumber(int $ownerId, int $year, int $month): string
+    /**
+     * Nomor tutup bulan tidak lagi mengikuti bulan kalender.
+     * Setiap owner memakai urutan berjalan: TB-0001, TB-0002, dan seterusnya.
+     */
+    public function nextClosingPeriodNumber(int $ownerId): int
     {
-        $ym = sprintf('%04d%02d', $year, $month);
-
-        $count = MonthlyClosing::query()
+        $max = MonthlyClosing::query()
             ->where('owner_id', $ownerId)
-            ->where('year', $year)
-            ->where('month', $month)
             ->lockForUpdate()
-            ->count() + 1;
+            ->max('closing_period_number');
 
-        return 'CLOSE-'.$ym.'-'.str_pad((string) $count, 4, '0', STR_PAD_LEFT);
+        return ((int) $max) + 1;
+    }
+
+    public function makeClosingNumber(int $ownerId, ?int $periodNumber = null): string
+    {
+        $periodNumber ??= $this->nextClosingPeriodNumber($ownerId);
+
+        return 'TB-'.str_pad((string) $periodNumber, 4, '0', STR_PAD_LEFT);
     }
 }

@@ -14,8 +14,6 @@ class StoreMonthlyClosingRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'month' => ['required', 'integer', 'between:1,12'],
-            'year' => ['required', 'integer', 'between:2000,2100'],
             'ships' => ['required', 'array', 'min:1'],
             'ships.*.captain_percentage' => ['required', 'numeric', 'between:0,100'],
             'ships.*.operational_expenses' => ['nullable', 'array'],
@@ -28,7 +26,7 @@ class StoreMonthlyClosingRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'ships.required' => 'Data rekap kapal tidak ditemukan. Tekan Preview terlebih dahulu.',
+            'ships.required' => 'Data rekap kapal tidak ditemukan. Pastikan ada invoice yang sudah diposting.',
             'ships.*.captain_percentage.required' => 'Persentase jasa kapten wajib diisi untuk setiap kapal.',
         ];
     }

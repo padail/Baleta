@@ -65,7 +65,6 @@ class MonthlyClosingController extends Controller
         $monthlyClosing->load([
             'shipItems.invoiceItems.invoice',
             'shipItems.operationalExpenses',
-            'nonOperationalExpenses',
         ]);
 
         return view('monthly-closings.show', ['closing' => $monthlyClosing]);
@@ -77,7 +76,6 @@ class MonthlyClosingController extends Controller
         $monthlyClosing->load([
             'shipItems.invoiceItems.invoice',
             'shipItems.operationalExpenses',
-            'nonOperationalExpenses',
         ]);
 
         return view('monthly-closings.print', ['closing' => $monthlyClosing]);

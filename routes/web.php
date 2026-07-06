@@ -10,17 +10,20 @@ use App\Http\Controllers\OwnerExpenseController;
 use App\Http\Controllers\ShipController;
 use App\Http\Middleware\EnsureRole;
 use App\Http\Middleware\EnsureUserIsActive;
+use App\Http\Middleware\PreventDuplicateSubmission;
 use App\Models\User;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', fn () => redirect()->route('dashboard'));
 
-Route::middleware(['auth', EnsureUserIsActive::class])->group(function () {
+Route::middleware(['auth', EnsureUserIsActive::class, PreventDuplicateSubmission::class])->group(function () {
     Route::get('/dashboard', DashboardController::class)->name('dashboard');
 
     Route::resource('ships', ShipController::class);
     Route::resource('captains', CaptainController::class)->except(['show']);
     Route::resource('buyers', BuyerController::class)->except(['show']);
+
+    Route::get('expenses/recap/print', [OwnerExpenseController::class, 'print'])->name('expenses.print');
     Route::resource('expenses', OwnerExpenseController::class)->parameters(['expenses' => 'expense'])->except(['show']);
 
     Route::middleware([EnsureRole::class.':'.User::ROLE_OWNER])->group(function () {

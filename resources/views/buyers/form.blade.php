@@ -1,5 +1,8 @@
-<div><label class="block text-sm font-medium mb-1">Nama Pembeli</label><input name="name" value="{{ old('name', $buyer->name ?? '') }}" required class="w-full rounded-lg border-slate-300"></div>
-<div><label class="block text-sm font-medium mb-1">Nomor HP</label><input name="phone" value="{{ old('phone', $buyer->phone ?? '') }}" class="w-full rounded-lg border-slate-300"></div>
-<div><label class="block text-sm font-medium mb-1">Alamat</label><textarea name="address" class="w-full rounded-lg border-slate-300">{{ old('address', $buyer->address ?? '') }}</textarea></div>
-<div><label class="block text-sm font-medium mb-1">Catatan</label><textarea name="notes" class="w-full rounded-lg border-slate-300">{{ old('notes', $buyer->notes ?? '') }}</textarea></div>
-<label class="flex items-center gap-2 text-sm"><input type="checkbox" name="is_active" value="1" {{ old('is_active', $buyer->is_active ?? true) ? 'checked' : '' }}> Aktif</label>
+<div class="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+    Master pembeli bersifat opsional. Pada invoice harian, nama pembeli tetap bisa diketik langsung tanpa membuat data master.
+</div>
+<div><label class="block text-sm font-bold mb-2">Nama Pembeli</label><input name="name" value="{{ old('name', $buyer->name ?? '') }}" required class="w-full min-h-[52px] rounded-2xl border-slate-200 bg-slate-50 px-4 text-base focus:border-teal-500 focus:ring-teal-500" placeholder="Nama pembeli"></div>
+<div><label class="block text-sm font-bold mb-2">Nomor HP</label><input name="phone" value="{{ old('phone', $buyer->phone ?? '') }}" class="w-full min-h-[52px] rounded-2xl border-slate-200 bg-slate-50 px-4 text-base focus:border-teal-500 focus:ring-teal-500" placeholder="08xxxxxxxxxx"></div>
+<div><label class="block text-sm font-bold mb-2">Alamat</label><textarea name="address" class="w-full rounded-2xl border-slate-200 bg-slate-50 px-4 py-3 text-base focus:border-teal-500 focus:ring-teal-500 min-h-24">{{ old('address', $buyer->address ?? '') }}</textarea></div>
+<div><label class="block text-sm font-bold mb-2">Catatan</label><textarea name="notes" class="w-full rounded-2xl border-slate-200 bg-slate-50 px-4 py-3 text-base focus:border-teal-500 focus:ring-teal-500 min-h-24">{{ old('notes', $buyer->notes ?? '') }}</textarea></div>
+<label class="flex items-center gap-3 rounded-2xl bg-slate-50 px-4 py-3 text-sm font-semibold"><input type="checkbox" name="is_active" value="1" {{ old('is_active', $buyer->is_active ?? true) ? 'checked' : '' }} class="rounded border-slate-300"> Pembeli aktif</label>

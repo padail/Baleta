@@ -1,19 +1,7 @@
 @extends('layouts.app')
 @section('title', 'Admin')
 @section('content')
-<div class="flex justify-between items-center mb-5">
-    <h1 class="text-2xl font-bold">Admin</h1>
-    <a href="{{ route('admins.create') }}" class="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-semibold">Tambah Admin</a>
-</div>
-<div class="bg-white rounded-xl shadow overflow-x-auto">
-<table class="min-w-full text-sm">
-<thead class="bg-slate-50"><tr><th class="p-3 text-left">Nama</th><th class="p-3 text-left">Email</th><th class="p-3 text-left">HP</th><th class="p-3 text-left">Status</th><th class="p-3 text-right">Aksi</th></tr></thead>
-<tbody>
-@forelse($admins as $admin)
-<tr class="border-t"><td class="p-3 font-semibold">{{ $admin->name }}</td><td class="p-3">{{ $admin->email }}</td><td class="p-3">{{ $admin->phone }}</td><td class="p-3">{{ $admin->is_active ? 'Aktif' : 'Nonaktif' }}</td><td class="p-3 text-right"><a class="text-blue-600" href="{{ route('admins.edit', $admin) }}">Edit</a></td></tr>
-@empty
-<tr><td colspan="5" class="p-6 text-center text-slate-500">Belum ada admin.</td></tr>
-@endforelse
-</tbody></table></div>
-<div class="mt-4">{{ $admins->links() }}</div>
+<div class="mb-5 flex items-start justify-between gap-3"><div><h1 class="text-2xl md:text-3xl font-black">Admin</h1><p class="text-sm text-slate-500 mt-1">Akun asisten owner untuk input data.</p></div><a href="{{ route('admins.create') }}" class="rounded-2xl bg-teal-600 px-4 py-3 text-sm font-bold text-white">Tambah</a></div>
+<div class="space-y-3 md:hidden">@forelse($admins as $admin)<div class="rounded-[1.5rem] bg-white p-4 shadow-sm border border-slate-100"><div class="flex justify-between gap-3"><div><div class="font-black text-lg">{{ $admin->name }}</div><div class="text-xs text-slate-500 mt-1">{{ $admin->email }} · {{ $admin->phone }}</div></div><span class="rounded-full px-3 py-1 text-xs font-bold h-fit {{ $admin->is_active ? 'bg-emerald-50 text-emerald-700' : 'bg-slate-100 text-slate-500' }}">{{ $admin->is_active ? 'Aktif' : 'Nonaktif' }}</span></div><a href="{{ route('admins.edit', $admin) }}" class="mt-3 inline-flex rounded-xl bg-teal-50 px-3 py-2 text-sm font-bold text-teal-700">Edit</a></div>@empty<div class="rounded-[1.5rem] bg-white p-8 text-center text-slate-500">Belum ada admin.</div>@endforelse</div>
+<div class="hidden md:block rounded-[1.5rem] bg-white shadow-sm border border-slate-100 overflow-hidden"><table class="min-w-full text-sm"><thead class="bg-slate-50"><tr><th class="p-4 text-left">Nama</th><th class="p-4 text-left">Email</th><th class="p-4 text-left">HP</th><th class="p-4 text-left">Status</th><th class="p-4 text-right">Aksi</th></tr></thead><tbody>@forelse($admins as $admin)<tr class="border-t border-slate-100"><td class="p-4 font-bold">{{ $admin->name }}</td><td class="p-4">{{ $admin->email }}</td><td class="p-4">{{ $admin->phone }}</td><td class="p-4">{{ $admin->is_active ? 'Aktif' : 'Nonaktif' }}</td><td class="p-4 text-right"><a class="font-bold text-teal-700" href="{{ route('admins.edit', $admin) }}">Edit</a></td></tr>@empty<tr><td colspan="5" class="p-8 text-center text-slate-500">Belum ada admin.</td></tr>@endforelse</tbody></table></div><div class="mt-4">{{ $admins->links() }}</div>
 @endsection

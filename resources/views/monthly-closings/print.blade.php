@@ -4,20 +4,21 @@
     <meta charset="UTF-8">
     <title>Cetak Tutup Bulan {{ $closing->closing_number }}</title>
     <style>
-        body{font-family:Arial,sans-serif;color:#111827;font-size:12px} .wrap{max-width:960px;margin:0 auto} h1,h2,h3{margin:0 0 6px} table{width:100%;border-collapse:collapse;margin:10px 0 18px} th,td{border:1px solid #d1d5db;padding:7px;text-align:left} th{background:#f3f4f6} .right{text-align:right}.summary{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin:14px 0}.box{border:1px solid #d1d5db;padding:10px}.muted{color:#6b7280}.page-break{page-break-inside:avoid}@media print{button{display:none}}
+        body{font-family:Arial,sans-serif;color:#111827;font-size:12px} .wrap{max-width:960px;margin:0 auto} h1,h2,h3{margin:0 0 6px} table{width:100%;border-collapse:collapse;margin:10px 0 18px} th,td{border:1px solid #d1d5db;padding:7px;text-align:left} th{background:#f3f4f6} .right{text-align:right}.summary{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin:14px 0}.box{border:1px solid #d1d5db;padding:10px}.muted{color:#6b7280}.note{background:#fffbeb;border:1px solid #fde68a;padding:10px;margin:10px 0}.page-break{page-break-inside:avoid}@media print{button{display:none}}
     </style>
 </head>
 <body>
 <div class="wrap">
     <button onclick="window.print()">Cetak</button>
-    <h1>Rekap Final Owner</h1>
+    <h1>Rekap Final Owner dari Kapal</h1>
     <p class="muted">{{ $closing->closing_number }} · Periode {{ str_pad($closing->month, 2, '0', STR_PAD_LEFT) }}/{{ $closing->year }}</p>
+    <div class="note">Pengeluaran non-operasional tidak termasuk dalam laporan ini dan memiliki rekap terpisah.</div>
 
     <div class="summary">
         <div class="box"><div class="muted">Bersih Harian</div><strong>{{ \App\Support\Money::rupiah($closing->daily_net_income) }}</strong></div>
         <div class="box"><div class="muted">Operasional Kapal</div><strong>{{ \App\Support\Money::rupiah($closing->operational_expense_total) }}</strong></div>
         <div class="box"><div class="muted">Jasa Kapten</div><strong>{{ \App\Support\Money::rupiah($closing->captain_share) }}</strong></div>
-        <div class="box"><div class="muted">Saldo Akhir Owner</div><strong>{{ \App\Support\Money::rupiah($closing->owner_final_income) }}</strong></div>
+        <div class="box"><div class="muted">Owner Final</div><strong>{{ \App\Support\Money::rupiah($closing->owner_share) }}</strong></div>
     </div>
 
     <h2>Rekap Per Kapal</h2>
@@ -59,9 +60,10 @@
     <h2>Ringkasan Akhir</h2>
     <table>
         <tbody>
-            <tr><td>Total Owner dari Semua Kapal</td><td class="right">{{ \App\Support\Money::rupiah($closing->owner_share) }}</td></tr>
-            <tr><td>Pengeluaran Non-Operasional</td><td class="right">{{ \App\Support\Money::rupiah($closing->non_operational_expense_total) }}</td></tr>
-            <tr><th>Saldo Akhir Owner</th><th class="right">{{ \App\Support\Money::rupiah($closing->owner_final_income) }}</th></tr>
+            <tr><td>Total Bersih Harian Semua Kapal</td><td class="right">{{ \App\Support\Money::rupiah($closing->daily_net_income) }}</td></tr>
+            <tr><td>Total Operasional Kapal</td><td class="right">{{ \App\Support\Money::rupiah($closing->operational_expense_total) }}</td></tr>
+            <tr><td>Total Jasa Kapten</td><td class="right">{{ \App\Support\Money::rupiah($closing->captain_share) }}</td></tr>
+            <tr><th>Pendapatan Final Owner dari Kapal</th><th class="right">{{ \App\Support\Money::rupiah($closing->owner_share) }}</th></tr>
         </tbody>
     </table>
 </div>

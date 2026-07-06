@@ -11,7 +11,8 @@
         <input type="email" name="email" value="{{ old('email', $request->email) }}" required class="w-full rounded-lg border-slate-300">
         <input type="password" name="password" required placeholder="Password baru" class="w-full rounded-lg border-slate-300">
         <input type="password" name="password_confirmation" required placeholder="Konfirmasi password" class="w-full rounded-lg border-slate-300">
-        <button class="w-full rounded-lg bg-blue-600 text-white py-2.5 font-semibold">Reset Password</button>
+        <button class="w-full rounded-lg bg-teal-600 text-white py-2.5 font-semibold">Reset Password</button>
     </form>
 </div>
+    <script src="{{ asset('pwa-register.js') }}" defer></script>
 </body></html>

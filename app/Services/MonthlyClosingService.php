@@ -4,7 +4,6 @@ namespace App\Services;
 
 use App\Models\FishDeliveryInvoice;
 use App\Models\MonthlyClosing;
-use App\Models\OwnerExpense;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use InvalidArgumentException;
@@ -45,26 +44,15 @@ class MonthlyClosingService
             ->sortBy('ship_name')
             ->values();
 
-        $nonOperationalExpenses = OwnerExpense::query()
-            ->forOwner($ownerId)
-            ->nonOperational()
-            ->posted()
-            ->forPeriod($month, $year)
-            ->orderBy('expense_date')
-            ->orderBy('id')
-            ->get();
-
         return [
             'invoices' => $invoices,
             'ship_summaries' => $shipSummaries,
-            'non_operational_expenses' => $nonOperationalExpenses,
             'total_ships' => $shipSummaries->count(),
             'total_invoices' => $invoices->count(),
             'total_boxes' => (int) $invoices->sum('total_boxes'),
             'total_income' => (int) $invoices->sum('total_income'),
             'total_expense' => (int) $invoices->sum('total_expense'),
             'daily_net_income' => (int) $invoices->sum('net_income'),
-            'non_operational_expense_total' => (int) $nonOperationalExpenses->sum('amount'),
         ];
     }
 
@@ -81,6 +69,7 @@ class MonthlyClosingService
                 ->where('month', $month)
                 ->where('year', $year)
                 ->where('status', '!=', MonthlyClosing::STATUS_CANCELLED)
+                ->lockForUpdate()
                 ->exists();
 
             if ($exists) {
@@ -130,8 +119,6 @@ class MonthlyClosingService
                 ];
             }
 
-            $nonOperationalTotal = (int) $preview['non_operational_expense_total'];
-            $ownerFinalIncome = $totalOwnerShare - $nonOperationalTotal;
             $weightedCaptainPercentage = $weightedCaptainBaseTotal > 0
                 ? round($weightedCaptainPercentageTotal / $weightedCaptainBaseTotal, 2)
                 : 0;
@@ -153,8 +140,9 @@ class MonthlyClosingService
                 'captain_percentage' => $weightedCaptainPercentage,
                 'captain_share' => $totalCaptainShare,
                 'owner_share' => $totalOwnerShare,
-                'non_operational_expense_total' => $nonOperationalTotal,
-                'owner_final_income' => $ownerFinalIncome,
+                // Kolom lama diset 0 agar kompatibel dengan database lama, tetapi tidak dipakai lagi dalam rekap final.
+                'non_operational_expense_total' => 0,
+                'owner_final_income' => $totalOwnerShare,
                 'status' => MonthlyClosing::STATUS_APPROVED,
                 'created_by' => auth()->id(),
                 'approved_by' => auth()->id(),
@@ -205,18 +193,9 @@ class MonthlyClosingService
                 }
             }
 
-            $preview['non_operational_expenses']->each(function (OwnerExpense $expense) use ($closing) {
-                $expense->update([
-                    'monthly_closing_id' => $closing->id,
-                    'status' => OwnerExpense::STATUS_CLOSED,
-                    'closed_at' => now(),
-                ]);
-            });
-
             return $closing->load([
                 'shipItems.invoiceItems.invoice',
                 'shipItems.operationalExpenses',
-                'nonOperationalExpenses',
             ]);
         });
     }

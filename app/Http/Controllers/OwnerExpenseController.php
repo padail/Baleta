@@ -14,26 +14,35 @@ class OwnerExpenseController extends Controller
     {
         $ownerId = $request->user()->activeOwnerId();
 
-        $expenses = OwnerExpense::query()
+        $baseQuery = OwnerExpense::query()
             ->forOwner($ownerId)
             ->nonOperational()
             ->when($request->filled('status'), fn ($q) => $q->where('status', $request->status))
             ->when($request->filled('month'), fn ($q) => $q->whereMonth('expense_date', $request->month))
-            ->when($request->filled('year'), fn ($q) => $q->whereYear('expense_date', $request->year))
+            ->when($request->filled('year'), fn ($q) => $q->whereYear('expense_date', $request->year));
+
+        $expenses = (clone $baseQuery)
             ->latest('expense_date')
             ->latest('id')
             ->paginate(15)
             ->withQueryString();
 
-        $summary = OwnerExpense::query()
-            ->forOwner($ownerId)
-            ->nonOperational()
-            ->when($request->filled('month'), fn ($q) => $q->whereMonth('expense_date', $request->month))
-            ->when($request->filled('year'), fn ($q) => $q->whereYear('expense_date', $request->year))
+        $summary = (clone $baseQuery)
             ->where('status', '!=', OwnerExpense::STATUS_CANCELLED)
             ->sum('amount');
 
-        return view('owner-expenses.index', compact('expenses', 'summary'));
+        $monthlySummary = OwnerExpense::query()
+            ->forOwner($ownerId)
+            ->nonOperational()
+            ->where('status', '!=', OwnerExpense::STATUS_CANCELLED)
+            ->when($request->filled('year'), fn ($q) => $q->whereYear('expense_date', $request->year))
+            ->selectRaw('YEAR(expense_date) as year, MONTH(expense_date) as month, COUNT(*) as total_records, SUM(amount) as total_amount')
+            ->groupByRaw('YEAR(expense_date), MONTH(expense_date)')
+            ->orderByRaw('year DESC, month DESC')
+            ->limit(12)
+            ->get();
+
+        return view('owner-expenses.index', compact('expenses', 'summary', 'monthlySummary'));
     }
 
     public function create()
@@ -64,7 +73,7 @@ class OwnerExpenseController extends Controller
     public function edit(OwnerExpense $expense)
     {
         $this->authorizeOwner($expense);
-        abort_if($expense->status === OwnerExpense::STATUS_CLOSED, 422, 'Pengeluaran yang sudah masuk tutup bulan tidak bisa diedit.');
+        abort_if($expense->status === OwnerExpense::STATUS_CANCELLED, 422, 'Pengeluaran yang sudah dibatalkan tidak bisa diedit.');
 
         return view('owner-expenses.edit', compact('expense'));
     }
@@ -72,7 +81,7 @@ class OwnerExpenseController extends Controller
     public function update(UpdateOwnerExpenseRequest $request, OwnerExpense $expense, AuditLogService $audit)
     {
         $this->authorizeOwner($expense);
-        abort_if($expense->status === OwnerExpense::STATUS_CLOSED, 422, 'Pengeluaran yang sudah masuk tutup bulan tidak bisa diedit.');
+        abort_if($expense->status === OwnerExpense::STATUS_CANCELLED, 422, 'Pengeluaran yang sudah dibatalkan tidak bisa diedit.');
 
         $old = $expense->toArray();
 
@@ -80,6 +89,7 @@ class OwnerExpenseController extends Controller
             'expense_date' => $request->expense_date,
             'expense_type' => OwnerExpense::TYPE_NON_OPERATIONAL,
             'ship_id' => null,
+            'monthly_closing_id' => null,
             'description' => $request->description,
             'amount' => (int) $request->amount,
             'notes' => $request->notes,
@@ -93,12 +103,31 @@ class OwnerExpenseController extends Controller
     public function destroy(OwnerExpense $expense, AuditLogService $audit)
     {
         $this->authorizeOwner($expense);
-        abort_if($expense->status === OwnerExpense::STATUS_CLOSED, 422, 'Pengeluaran yang sudah masuk tutup bulan tidak bisa dibatalkan.');
+        abort_if($expense->status === OwnerExpense::STATUS_CANCELLED, 422, 'Pengeluaran ini sudah dibatalkan.');
 
         $expense->update(['status' => OwnerExpense::STATUS_CANCELLED]);
         $audit->record('owner_expense.cancelled', $expense, null, ['status' => OwnerExpense::STATUS_CANCELLED]);
 
         return redirect()->route('expenses.index')->with('success', 'Pengeluaran non-operasional berhasil dibatalkan.');
+    }
+
+    public function print(Request $request)
+    {
+        $ownerId = $request->user()->activeOwnerId();
+
+        $expenses = OwnerExpense::query()
+            ->forOwner($ownerId)
+            ->nonOperational()
+            ->where('status', '!=', OwnerExpense::STATUS_CANCELLED)
+            ->when($request->filled('month'), fn ($q) => $q->whereMonth('expense_date', $request->month))
+            ->when($request->filled('year'), fn ($q) => $q->whereYear('expense_date', $request->year))
+            ->orderBy('expense_date')
+            ->orderBy('id')
+            ->get();
+
+        $total = (int) $expenses->sum('amount');
+
+        return view('owner-expenses.print', compact('expenses', 'total'));
     }
 
     private function authorizeOwner(OwnerExpense $expense): void

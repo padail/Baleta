@@ -44,11 +44,10 @@ class DashboardController extends Controller
             'non_operational_expense_total' => (int) OwnerExpense::query()
                 ->forOwner($ownerId)
                 ->nonOperational()
-                ->whereIn('status', [OwnerExpense::STATUS_POSTED, OwnerExpense::STATUS_CLOSED])
+                ->where('status', '!=', OwnerExpense::STATUS_CANCELLED)
                 ->whereYear('expense_date', $now->year)
                 ->whereMonth('expense_date', $now->month)
                 ->sum('amount'),
-            'owner_final_income' => (int) ($closing?->owner_final_income ?? 0),
         ];
 
         $summary['distributable_income'] = $summary['net_income'] - $summary['operational_expense_total'];

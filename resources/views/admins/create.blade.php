@@ -1,10 +1,15 @@
 @extends('layouts.app')
 @section('title', 'Tambah Admin')
 @section('content')
-<h1 class="text-2xl font-bold mb-5">Tambah Admin</h1>
-<form method="POST" action="{{ route('admins.store') }}" class="bg-white rounded-xl shadow p-5 space-y-4 max-w-2xl">
-@csrf
-@include('admins.form', ['admin' => null])
-<button class="bg-blue-600 text-white px-4 py-2 rounded-lg font-semibold">Simpan</button>
+<div class="mb-5">
+    <a href="javascript:history.back()" class="inline-flex items-center gap-2 text-sm font-semibold text-slate-500 mb-3">← Kembali</a>
+    <h1 class="text-2xl md:text-3xl font-black tracking-tight">Tambah Admin</h1>
+    <p class="text-sm text-slate-500 mt-1">Admin membantu owner mencatat aktivitas kapal dan invoice.</p>
+</div>
+<form method="POST" action="{{ route('admins.store') }}" class="bg-white rounded-[1.75rem] shadow-sm border border-slate-100 p-4 md:p-6 space-y-4 max-w-2xl">
+    @csrf 
+    @php($admin = null)
+    @include('admins.form')
+    <button class="w-full md:w-auto min-h-[52px] rounded-2xl bg-teal-600 px-6 text-white font-bold shadow-lg shadow-teal-700/20">Simpan</button>
 </form>
 @endsection
